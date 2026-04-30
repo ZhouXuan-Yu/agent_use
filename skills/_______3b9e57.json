@@ -1,0 +1,81 @@
+{
+  "id": "_______3b9e57",
+  "name": "检测对比查找",
+  "description": "先检测图1的关键点，然后比较图1和图2，最后在所有图中搜索和图1最像的",
+  "keywords": [
+    "检测对比查找",
+    "ccfind"
+  ],
+  "versions": [
+    {
+      "version": 1,
+      "created_at": "2026-04-13 20:37:03",
+      "author": "user",
+      "changelog": "Captured from conversation",
+      "system_prompt_addon": "首先调用 list_available_images 工具列出所有可用图像，以了解当前环境中的图像资源情况。如果该步骤失败，请检查网络连接或系统权限并重试。\n\n接着，针对用户指定的图像，调用 vision_tool_detect_keypoints 工具检测其 ORB 关键点。参数中的图像名称应替换为用户实际上传的图像文件名。若检测失败，记录错误信息并尝试跳过或重新执行该步骤。\n\n随后，调用 vision_tool_match_images 工具进行特征匹配。将用户指定的图像作为第一张图，将任务中指定的对比目标图像（如镜像版本或特定参照图）作为第二张图传入参数。如果匹配过程出错，应标记该结果并继续后续流程。\n\n然后，调用 vision_tool_compare_multiple 工具进行批量相似度比较。将用户指定的图像作为查询图，将图像列表中的其他候选图像名称作为对比集合传入参数。若批量比较失败，可尝试分批处理或检查图像格式兼容性。\n\n最后，综合上述所有步骤返回的关键点信息、两两匹配结果以及多图相似度排名，整合分析所有视觉特征，生成一份完整的图像分析总结报告。",
+      "suggested_workflow": [
+        {
+          "tool": "list_available_images",
+          "description": "构造工具参数：列出图像"
+        },
+        {
+          "tool": "vision_tool_detect_keypoints",
+          "description": "构造工具参数：检测关键点"
+        },
+        {
+          "tool": "vision_tool_match_images",
+          "description": "构造工具参数：匹配图像"
+        },
+        {
+          "tool": "vision_tool_compare_multiple",
+          "description": "构造工具参数：批量比较"
+        }
+      ]
+    },
+    {
+      "version": 2,
+      "created_at": "2026-04-13 20:39:20",
+      "author": "user",
+      "changelog": "Manual edit",
+      "system_prompt_addon": "首先调用 list_available_images 工具列出所有可用图像，以了解当前环境中的图像资源情况。如果该步骤失败，请检查网络连接或系统权限并重试。\n\n接着，针对用户指定的图像，调用 vision_tool_detect_keypoints 工具检测其 ORB 关键点。参数中的图像名称应替换为用户实际上传的图像文件名。若检测失败，记录错误信息并尝试跳过或重新执行该步骤。\n\n随后，调用 vision_tool_match_images 工具进行特征匹配。将用户指定的图像作为第一张图，将任务中指定的对比目标图像（如镜像版本或特定参照图）作为第二张图传入参数。如果匹配过程出错，应标记该结果并继续后续流程。\n\n然后，调用 vision_tool_compare_multiple 工具进行批量相似度比较。将用户指定的图像作为查询图，将图像列表中的其他候选图像名称作为对比集合传入参数。若批量比较失败，可尝试分批处理或检查图像格式兼容性。\n[注意，及时用户只提供了2个图片，但是用户仍然是想要对第一个图片进行注意搜索操作的，不要忽略]\n\n最后，综合上述所有步骤返回的关键点信息、两两匹配结果以及多图相似度排名，整合分析所有视觉特征，生成一份完整的图像分析总结报告。",
+      "suggested_workflow": [
+        {
+          "tool": "list_available_images",
+          "description": "构造工具参数：列出图像"
+        },
+        {
+          "tool": "vision_tool_detect_keypoints",
+          "description": "构造工具参数：检测关键点"
+        },
+        {
+          "tool": "vision_tool_match_images",
+          "description": "构造工具参数：匹配图像"
+        },
+        {
+          "tool": "vision_tool_compare_multiple",
+          "description": "构造工具参数：批量比较"
+        }
+      ]
+    }
+  ],
+  "active_version": 2,
+  "enabled": true,
+  "execution_count": 2,
+  "last_executed_at": "2026-04-13 20:40:38",
+  "execution_log": [
+    {
+      "at": "2026-04-13 20:37:34",
+      "context": "city_day.jpg and city_angle2.jpg",
+      "success": true,
+      "duration_ms": 16189
+    },
+    {
+      "at": "2026-04-13 20:40:38",
+      "context": "city_day.jpg and city_angle2.jpg",
+      "success": true,
+      "duration_ms": 37499
+    }
+  ],
+  "created_at": "2026-04-13 20:37:03",
+  "updated_at": "2026-04-13 20:39:20"
+}

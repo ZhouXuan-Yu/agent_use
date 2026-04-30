@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo 5 — LLM 工具调用 × 传统视觉算法 · Agent Tool Calling</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="lightbox" id="lightbox">
+  <img id="lightbox-img" src="" alt="Enlarged">
+</div>
+
+<h1>LLM 工具调用 × 传统视觉算法 · Agent Tool Calling <span class="current-ai" id="current-ai-badge"><span class="dot"></span><span id="current-ai-label">Loading…</span></span></h1>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="main">Agent 对话</button>
+  <button class="tab-btn" data-tab="skills">⚡ Skills</button>
+  <button class="tab-btn" data-tab="settings">AI 设置</button>
+</div>
+<hr class="tab-divider">
+
+<div class="tab-content active" id="tab-main">
+
+<p class="subtitle">
+  大模型（LLM）通过 <strong>Function Calling</strong> 调用封装好的 <strong>ORB 特征匹配</strong> 工具——
+  你输入自然语言问题（"这两张图是同一个地方吗？"），Agent 自动选择工具、获取结果、给出判断。
+  传统视觉算法不是"过时的"，而是现代 AI 系统中<strong>可被调用的能力模块</strong>。
+</p>
+
+<!-- Architecture Diagram (dynamically built from actual exchange) -->
+<div class="main-wrap">
+  <div class="panel pipeline-panel">
+    <h2 id="pipeline-title">Agent 架构 · Architecture Flow <span class="pipeline-stats" id="pipeline-stats"></span></h2>
+    <div class="pipeline-flow" id="pipeline-flow">
+      <div class="pipe-placeholder">发送一条消息后，这里会实时展示 Agent 的完整执行流程 →</div>
+    </div>
+    <div class="pipe-detail" id="pipe-detail"></div>
+  </div>
+</div>
+
+<!-- Main Layout: Library + Chat + Toolbox -->
+<div class="main-wrap main-row">
+  <div class="panel lib-panel">
+    <h2>图像库 · Image Library</h2>
+    <div class="lib-grid" id="lib-grid">
+      <div style="grid-column: 1/-1; text-align: center; padding: 30px 0; color: #484f58; font-size: 0.78rem;">
+        <div class="spinner"></div> 加载中…
+      </div>
+    </div>
+    <p class="lib-hint">点击选择图像，名称自动填入对话。可多选。</p>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      📁 上传自己的图片 · Upload your image
+      <input type="file" id="file-input" accept="image/*" multiple>
+    </div>
+  </div>
+
+  <div class="panel chat-panel">
+    <h2>Agent 对话 · Chat with Vision Agent</h2>
+
+    <div class="conv-bar" id="conv-bar">
+      <button class="conv-btn primary" id="btn-new-conv" title="新建对话">✚ 新建</button>
+      <button class="conv-btn" id="btn-history-conv" title="历史对话">📂 历史</button>
+      <span class="conv-title-display" id="conv-title-display" title="双击改名">新对话</span>
+      <input class="conv-title-input" id="conv-title-input" type="text" maxlength="60" style="display:none">
+      <span class="conv-autosave-dot" id="conv-autosave-dot" title="已自动保存"></span>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg msg-assistant">
+        <div class="bubble">你好！我是视觉分析 Agent 🔍<br>
+        我可以调用 <strong>ORB 特征匹配</strong> 工具来帮你分析图像。试试问我：<br>
+        • "这两张图是同一个地方吗？"<br>
+        • "帮我检测某张图的关键点"<br>
+        • "在所有图片里找到和某张图最相似的"<br><br>
+        <span style="color:#8b949e;font-size:0.78rem">💡 点击左侧图像可以快速选中，图片名会自动填入。</span>
+        </div>
+      </div>
+    </div>
+    <div class="chat-resize-handle" id="chat-resize-handle" title="拖动调整高度"></div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="输入你的问题… 例如：比较 city_day.jpg 和 forest.jpg" autocomplete="off">
+      <button id="btn-send" type="button">发送</button>
+    </div>
+
+    <div class="quick-questions" id="quick-questions">
+      <button class="quick-btn" data-q="请列出所有可用的测试图像">📋 列出所有图像</button>
+      <button class="quick-btn" data-q="请比较 city_day.jpg 和 city_angle2.jpg 是不是同一个场景">🏙️ 同场景检测</button>
+      <button class="quick-btn" data-q="请比较 city_day.jpg 和 forest.jpg 这两张图">🔀 不同场景对比</button>
+      <button class="quick-btn" data-q="请检测 night_city.jpg 的关键点有多少">🔑 关键点检测</button>
+      <button class="quick-btn" data-q="用所有图片作为数据库，查询和 city_rotated.jpg 最相似的图">🔍 图像检索</button>
+      <button class="quick-btn" data-q="帮我分析 mountain.jpg 和 beach.jpg 有没有相似之处">⛰️🏖️ 山vs海</button>
+    </div>
+  </div>
+
+  <!-- Toolbox Sidebar -->
+  <div class="toolbox-wrap" id="toolbox-wrap">
+    <div class="toolbox-resize-handle" id="toolbox-resize-handle"></div>
+    <div class="panel toolbox-panel" id="toolbox-panel">
+      <h2>🧰 工具箱 · Tools</h2>
+      <div class="toolbox-list" id="toolbox-grid">
+        <div class="tool-card" data-tool="vision_tool_detect_keypoints">
+          <span class="tool-card-icon">🔑</span>
+          <div class="tool-card-text">
+            <span class="tool-card-name">detect_keypoints</span>
+            <div class="tool-card-brief">检测 ORB 关键点</div>
+          </div>
+        </div>
+        <div class="tool-card" data-tool="vision_tool_match_images">
+          <span class="tool-card-icon">🔍</span>
+          <div class="tool-card-text">
+            <span class="tool-card-name">match_images</span>
+            <div class="tool-card-brief">特征匹配两张图</div>
+          </div>
+        </div>
+        <div class="tool-card" data-tool="vision_tool_compare_multiple">
+          <span class="tool-card-icon">🔎</span>
+          <div class="tool-card-text">
+            <span class="tool-card-name">compare_multiple</span>
+            <div class="tool-card-brief">图像检索排名</div>
+          </div>
+        </div>
+        <div class="tool-card" data-tool="list_available_images">
+          <span class="tool-card-icon">📋</span>
+          <div class="tool-card-text">
+            <span class="tool-card-name">list_images</span>
+            <div class="tool-card-brief">列出可用图像</div>
+          </div>
+        </div>
+      </div>
+      <hr class="toolbox-divider">
+      <h3 class="toolbox-section-title">⚡ 技能 · Skills</h3>
+      <div class="skills-list" id="skills-list">
+        <div class="skill-empty">暂无技能 · 完成对话后可保存为技能</div>
+      </div>
+      <div class="tool-detail" id="tool-detail"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #tab-main -->
+
+<div class="tab-content" id="tab-settings">
+<div class="ai-settings">
+
+  <div class="config-section" style="margin-bottom: 14px;">
+    <h3>选择 AI 供应商 · Choose Provider</h3>
+    <p style="font-size:0.75rem;color:#8b949e;margin-bottom:12px;">选择一个默认供应商用于 Agent 对话。配置自动保存至服务器，不会因刷新丢失。</p>
+    <div class="provider-tabs" id="provider-tabs"></div>
+  </div>
+
+  <div id="provider-config-area"></div>
+
+  <div id="ollama-models-section" class="ollama-models" style="display:none">
+    <div class="config-section">
+      <h3>
+        Ollama 本地模型 · Installed Models
+        <button class="refresh-btn" id="btn-refresh-models" title="刷新模型列表">↻ 刷新</button>
+        <div class="auto-refresh">
+          <input type="checkbox" id="chk-auto-refresh" checked>
+          <label for="chk-auto-refresh">自动刷新</label>
+          <span class="pulse-dot active" id="auto-refresh-dot"></span>
+        </div>
+      </h3>
+      <div id="ollama-models-body">
+        <div class="no-models"><span class="spinner"></span> 加载中…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-section" style="margin-top: 14px;">
+    <h3 style="color:#d2a8ff;">使用提示 · Tips</h3>
+    <div style="font-size:0.78rem;color:#8b949e;line-height:1.7;">
+      <p><strong style="color:#c9d1d9;">Ollama（推荐优先）</strong> — 完全本地运行，无需 API Key。安装后运行 <code style="background:#21262d;padding:1px 5px;border-radius:3px;">ollama pull qwen3.5:35b</code> 即可使用。模型列表自动同步，新安装的模型会实时显示。</p>
+      <p><strong style="color:#c9d1d9;">DeepSeek</strong> — 访问 <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:#58a6ff;">platform.deepseek.com</a> 获取 API Key。推荐模型：deepseek-chat。</p>
+      <p><strong style="color:#c9d1d9;">Kimi (Moonshot)</strong> — 访问 <a href="https://platform.moonshot.cn/console/api-keys" target="_blank" style="color:#58a6ff;">platform.moonshot.cn</a> 获取 API Key。推荐模型：moonshot-v1-8k。</p>
+      <p><strong style="color:#c9d1d9;">MiniMax</strong> — 访问 <a href="https://platform.minimaxi.com/user-center/basic-information/interface-key" target="_blank" style="color:#58a6ff;">platform.minimaxi.com</a> 获取 API Key。推荐模型：MiniMax-Text-01。</p>
+      <p><strong style="color:#c9d1d9;">GLM (智谱)</strong> — 访问 <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" style="color:#58a6ff;">open.bigmodel.cn</a> 获取 API Key。推荐模型：glm-4-flash（免费）。</p>
+      <p style="margin-top:8px;color:#d29922;">⚠️ API Key 保存在服务器本地文件中，不会上传到任何外部服务。请不要在公开环境中使用含有敏感 Key 的配置文件。</p>
+    </div>
+  </div>
+
+</div>
+</div><!-- end #tab-settings -->
+
+<div class="tab-content" id="tab-skills">
+  <div class="skills-tab-wrap" id="skills-tab-content">
+    <div class="skill-empty" style="padding:40px 0;text-align:center;">加载中…</div>
+  </div>
+</div><!-- end #tab-skills -->
+
+<!-- Skill Capture Modal -->
+<div class="skill-capture-overlay" id="skill-capture-overlay">
+  <div class="skill-capture-modal">
+    <div class="capture-modal-head">
+      <h3>⚡ 保存为技能 · Save as Skill</h3>
+      <button class="conv-drawer-close" onclick="App.closeCaptureModal()">✕</button>
+    </div>
+    <div class="capture-modal-body" id="capture-modal-body"></div>
+    <div class="capture-modal-foot">
+      <button class="skill-action-btn primary" onclick="App.confirmCapture()">💾 保存技能</button>
+      <button class="skill-action-btn" onclick="App.closeCaptureModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="conv-drawer-overlay" id="conv-drawer-overlay">
+  <div class="conv-drawer" id="conv-drawer">
+    <div class="conv-drawer-head">
+      <h3>📂 历史对话 · Conversations</h3>
+      <button class="conv-drawer-close" id="conv-drawer-close">✕</button>
+    </div>
+    <div class="conv-drawer-list" id="conv-drawer-list">
+      <div class="conv-drawer-empty">暂无保存的对话</div>
+    </div>
+  </div>
+</div>
+
+<!-- JS modules loaded in dependency order (no bundler needed) -->
+<script src="js/utils.js"></script>
+<script src="js/state.js"></script>
+<script src="js/resize.js"></script>
+<script src="js/json-panels.js"></script>
+<script src="js/image-library.js"></script>
+<script src="js/pipeline.js"></script>
+<script src="js/toolbox.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/skill-editor.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/conversation.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
