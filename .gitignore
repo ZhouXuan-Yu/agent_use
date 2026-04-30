@@ -35,6 +35,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Local settings
+# Local settings (API keys, etc.)
+ai_config.json
 *.local
 .env
